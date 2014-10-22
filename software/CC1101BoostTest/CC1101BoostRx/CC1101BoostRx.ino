@@ -10,12 +10,12 @@
   Version 1.0 Dec 3, 2013
   Notes: Basically receives packet data, measures RSSI and prints them out.
 */
-
+#define CC1190
 #include <SPI.h>
-#include <RADIOFH.h>
-
+//#include <RADIOFH.h>
+#include "RADIOFH_B.h"
 // Local non-default settings exported from TI SmartRF Studio
-#include "cc1101_70cm_gfsk_2kb_5khz_manchester_P10dbm.h"
+#include "cc1101_RemBase_27mhz_9020000_26khz_gfsk_2400_4940_man_15dbm.h"
 
 byte i;
 byte size;
@@ -46,7 +46,7 @@ void loop() {
       Serial.print((char)Pkt_Buffer[i]);
     }
     
-    Serial.print(" ");Serial.print( CC1101.ReadRSSI() );
+    Serial.print(" ");Serial.print( CC1101.ReadRSSI( RSSI_OFFSET ) );
     Serial.println("");
     CC1101.SetReceive();
     

@@ -1,0 +1,37 @@
+Default configuration values from RADIO.cpp
+
+Lou Nigra
+12-Aug-2013
+
+MDMCFG4: 0x15
+ [7:6]CHANBW_E = 0x00
+ [5:4]CHANBW_M = 0x01
+	BWchannel=fxosc/8/(4+CHANBW_M)/2^CHANBW_E
+		 = 650000 Hz
+ [3:0]DRATE_E  = 0x05
+MDMCFG3: 0x75
+ [7:0]DRATE_M = 0x75	
+	Rdata=(256+DRATE_M)*2^DRATE_E*fxosc/2^28
+	     = 1156 Hz
+MDMCFG2: 0x03
+ [7:7]DEM_DCFILT_OFF = 0x00	Enable
+ [6:4]MOD_FORMAT = 0x00		2-FSK
+ [3:3]MANCHESTER_EN = 0x00	disabled
+ [2:0]SYNC_MODE = 0x03		30/32 sync bits
+MDMCFG1: 0x21
+ [7:7]FEC_EN = 0x00		FEC disabled
+ [6:4]NUM_PREAMBLE = 0x02	4 preamble bytes
+ [3:2]not used
+ [1:0]CHANSPC_E = 0x01
+MDMCFG0: 0xE5
+ [7:0]CHANSPC_M = 0xE5
+	dfchan=fxosc*(256+DCHANSPC_M)*2^CHANSPC_E/2^18
+	      = 96206.67 Hz
+DEVIATN: 0x71
+ [7:7]not used
+ [6:4]DEVIATION_E = 0x07
+ [3:3]not used
+ [2:0]DEVIATION_M = 0x1
+	fdev=fxosc*(8+DEVIATION_M)*2^DEVIATION_E/2^17
+	    = 228516 Hz
+
