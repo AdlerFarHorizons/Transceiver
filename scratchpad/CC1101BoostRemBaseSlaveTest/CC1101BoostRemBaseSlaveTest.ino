@@ -22,6 +22,7 @@
 //#include "cc1101_RemBase_4464000_25khz_gfsk_2kb_3khz_manchester_P10dbm.h"
 #include "Step4_CC1190_915.h"
 int packet_length = 30; // Max is 61
+byte channel = 0;
 String txMsg;
 byte i;
 byte size;
@@ -42,7 +43,7 @@ void setup() {
 
   // Set Channel to 0 - 3 for even channel configuration,
   // 0 - 2 for odd channel configuration
-  CC1101.WriteSingleReg( RADIO_CHANNR,0x00 );  
+  CC1101.WriteSingleReg( RADIO_CHANNR,channel );  
 
   delay(1000);
   CC1101.SetReceive(); // Start with waiting for packet

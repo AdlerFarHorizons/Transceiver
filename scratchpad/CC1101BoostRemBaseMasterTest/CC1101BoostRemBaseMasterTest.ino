@@ -22,6 +22,7 @@
 #include <MsTimer2.h>
 
 int packet_length = 30; // Max is 61
+byte channel = 0;
 int period = 5000; // ms
 byte i;
 byte size;
@@ -51,7 +52,7 @@ void setup () {
   
   // Set Channel to 0 - 3 for even channel configuration,
   // 0 - 2 for odd channel configuration
-  CC1101.WriteSingleReg( RADIO_CHANNR,0x00 );  
+  CC1101.WriteSingleReg( RADIO_CHANNR,channel );  
 
   delay(1000);
   // Note: there's no SetReceive() as Master starts with transmit
