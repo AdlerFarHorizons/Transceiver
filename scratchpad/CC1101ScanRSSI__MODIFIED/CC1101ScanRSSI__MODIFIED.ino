@@ -67,7 +67,11 @@ void loop() {
     average[j] = ( average[j] * count + tmpave ) / ( count + 1 );
     if ( tmpave > max[j] ) max[j] = tmpave;
     Serial.print("Chan ");Serial.print(channel[j]);
-    Serial.print(": current | cum ave | max (dbm) ");
+    Serial.print(": freq2 | freq1 | freq 0 | current | cum ave | max (dbm) ");
+    Serial.print(" "); Serial.print(freq2); 
+    Serial.print(" | "); Serial.print(freq1); 
+    Serial.print(" | "); Serial.print(freq0); 
+    Serial.print(" | ");
     Serial.print( tmpave, 1 );Serial.print( " | " );
     Serial.print( average[j], 1 );Serial.print( " | " );
     Serial.print( max[j], 1 );Serial.println( "" );
