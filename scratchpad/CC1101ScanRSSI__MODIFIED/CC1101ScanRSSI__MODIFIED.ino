@@ -24,9 +24,7 @@ void setup() {
   Serial.flush();
   Serial.begin (9600);
   
-  float base;  
-  float chan;
-    
+  
   SPI.begin ();
   SPI.setClockDivider(SPI_CLOCK_DIV4);   
   SPI.setBitOrder(MSBFIRST);   
@@ -47,10 +45,13 @@ void loop() {
   Serial.print( "Sweep " );Serial.print( count + 1 );
   Serial.println( " -------------------");
   for( int j = 0 ; j < sizeof( channel ) - 1 ; j++ ) {
-    float base = (29491200/13);  
-    float chan = ((2048/65)*channel[j]);
-    long Freq = (long)(base + chan + 0.5);
-    }
+    float base = (29491200.0/13.0);  
+    float chan = ((2048.0/65.0)*channel[j]);
+    long freq = (long)(base + chan + 0.5);
+    
+    freq0= (byte)(freq&0xFF);
+    freq1= (byte)((freq&0xFF00)>>8);
+    freq2= (byte)((freq&0xFF0000)>>16);
     
     CC1101.WriteSingleReg( RADIO_FREQ0, freq0);
     CC1101.WriteSingleReg( RADIO_FREQ1, freq1);
