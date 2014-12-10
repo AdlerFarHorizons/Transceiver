@@ -1,0 +1,28 @@
+/*
+  This is a function you can add to read the temperature
+  from one of several devices:
+  
+  Arguments:
+  pin (int) Analog pin number attached to sensor.
+  sensType (int) Selects one of three sensor types.
+  vRef (float) The arduino's supply voltage (5.0 for UNO)
+*/
+
+float readTemp( int pin, int sensType, float vRef ) {
+  // sensType parameter vs. Temperature Sensor type:
+  //   0  LM60
+  //   1  MAX6605
+  //   2  TMP36
+  int mVoltsAtRefTemp[] = { 424, 744, 750 };
+  int refTempC[] = { 0, 0, 25 };
+  float mVperDegC[] = { 6.25, 11.9, 10.0 };
+
+  int reading = analogRead(vTempPin);
+  float mVolts = reading * vRef / 1.024;
+
+  return( ( mVolts - mVoltsAtRefTemp[sensType] ) / 
+            ( mVperDegC[sensType] ) + 
+            refTempC[sensType]);
+  
+}
+
