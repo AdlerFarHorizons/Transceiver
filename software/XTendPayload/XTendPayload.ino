@@ -7,6 +7,7 @@
  * Payload (controller) transmits packet on MsTimer2 interrupt
  * and establishes time slot 0 for all Ground units (peripherals)
  */
+#define GPSLEN 100 //max length of GPS output to be sent
 
 #include <AltSoftSerial.h>
 #include <MsTimer2.h>
@@ -45,17 +46,8 @@ void loop(){
     sendData();
     numb++;
     txFlag = false;
-    
   } else {
     getCharGPS();
-    if ( sentenceRdy ) {
-      int i = 0;
-      while( sentenceBuf[i] != 0 ) {
-        Serial.write( sentenceBuf[i] );
-        sentenceRdy = false;
-        i++;
-      }
-    }
   }
 }
 
@@ -65,11 +57,11 @@ void getCharGPS() {
   if ( altSerial.available() ) {
     c = altSerial.read();
     if ( !sentenceRdy ) {
-      if ( c == 36 ) {
+      if ( c == 36 ) { //36 is '$', start of GPS statement - KN
         sentenceBufIndex = 0;
         sentencePending = true;
       }
-      if ( sentencePending && c == 10 ) {
+      if ( sentencePending && c == 10 ) { //10 is new line - KN
         sentenceRdy = true;
         sentencePending = false;
       }
@@ -81,6 +73,13 @@ void getCharGPS() {
 }
 
 void sendData() {
+  //print out sentenceBuf, all of it - KN
+  int i = 0;
+  while( sentenceBuf[i] != 0 ) {
+      Serial.write( sentenceBuf[i] );
+      sentenceRdy = false;
+      i++;
+  }
 }
 
 void transmit() {
