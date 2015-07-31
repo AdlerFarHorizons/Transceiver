@@ -9,10 +9,12 @@
 #include <SPI.h>
 #include "RADIOFH_B.h"
 #include "Step4_CC1190_915.h"
-//String rssi; 
-byte channel[18] = { 0,1,2,8,9,10,81,82,83,84,90,91,92,93,99,100,101,102 };
-float average[18];
-float max[18] = {-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200 };
+//String rssi;
+// Channels are 902 - 902.2875 MHz with 12.5 kHz spacing.
+// Channel 8 (902.1) is for calling and we won't be using it.
+byte channel[23] = { 0,1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23 };
+float average[23];
+float max[23] = {-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200,-200 };
 int count, num;
 float tmpave;
 
@@ -45,8 +47,9 @@ void loop() {
   Serial.print( "Sweep " );Serial.print( count + 1 );
   Serial.println( " -------------------");
   for( int j = 0 ; j < sizeof( channel ) - 1 ; j++ ) {
-    float base = (29491200.0/13.0);  
-    float chan = ((2048.0/65.0)*channel[j]);
+    // Amateur experimental subband 902.0 - 902.875 MHz
+    float base = 902.0 / (27.0 / 65536); //(29491200.0/13.0);  
+    float chan = (4096.0 / 135.0) * channel[j]; //((2048.0/65.0)*channel[j]);
     long freq = (long)(base + chan + 0.5);
     
     freq0= (byte)(freq&0xFF);
