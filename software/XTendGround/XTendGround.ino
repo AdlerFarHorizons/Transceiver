@@ -1,7 +1,4 @@
-
 #include <AltSoftSerial.h>
-
-//those vars from other file
 AltSoftSerial altSerial; // TX Pin 9, RX Pin 8
 char pkt_buffer[200];
 boolean sentencePending, sentenceRdy;
@@ -14,73 +11,41 @@ int sentenceBufIndex = 0;
 boolean rxDone = false;
 boolean rxStart = false;
 String thisGPS;
-char msgIn[100];
-char c = '*';
+String msgIn = "";
+
+
 
 void setup(){
   Serial.begin(9600);
-  altSerial.begin( 4800 ); 
+    altSerial.begin( 4800 ); 
   sentencePending = false;
   sentenceRdy = false;
   sentenceBuf[0] = 0;
   sentenceBufIndex = 0;
 }
-
 void loop(){
-  while (Serial.available()){
-    c = Serial.read();
-    if (c=='$'){                     //check for start
-      for(int i = 0; i < 100; i++){
-        if(c == 10){                 //check for end
-          msgIn[i+1]= '\0';
-          rxDone = true;
-          break;
-        }
-        msgIn[i]=c;                  //otherwise, add on to msg
-        
-        /* README --KN
-          I've discovered that there is a delay when reading the serial:
-          It should be $GPRMS <some other stuff here>
-          but it turns into $  <...some time passes...> P <...some more time passes...> RMS <and the other stuff comes really fast through the serial read>
-        
-         So the line underneath this comment was causing issues: the Y with a ^ characters was caused by a lack of stuff to read (Serial.read returns -1 if there is nothing to read)
-         Need to get around this with Serial.available and some more waiting loops.
-         
-         This was working a while back, with the messages having extra YYYYYYY's in it, but that version was destroyed as I tried to fix it.
-         Most of the code here is logical. Need to figure out why nothing is printing out now.
-        */
-        
-        
-        c = Serial.read();           //take next byte
-      }//end for
-    }//done with receive
-  }  
-    //printing what's in msgIn
-    if(rxDone == true){              //only if we get a new message
-      Serial.print("Received: ");
-      
-      /*
-      Also, serial.print(msgIn) vs Serial.write(msgIn), vs. the loop below?
-      I think they all work.
-      */
-      int j = 0;
-      while (msgIn[j] != 0){
-        Serial.write(msgIn[j]);
-        j++;
+  char lastChar;
+  while(Serial.available()){
+    lastChar = Serial.read();
+    if(lastChar == 10 && msgIn != ""){ //end of RX string
+      if(msgIn.substring(msgIn.indexOf(' ')) == " ok\r"){ //if this is just the acknowledgement message
+        //we're done, payload rcvd our msg
+        msgIn = "";
+      }else{
+        sendMyGPS(); 
+        //filters out the counter number at the end of rx string and send it
+        Serial.println(" "+msgIn.substring(1 + msgIn.indexOf(' ')));
+        msgIn = "";
       }
-      
-      //make our response
-      thisGPS = getCharGPS();
-      if(rxDone){
-        Serial.print(thisGPS);
-      }
-      rxDone == false;
+    }else{
+      msgIn += lastChar;
+      getCharGPS();
     }
+  }
 }
 
-
-
-String getCharGPS() { 
+void getCharGPS() {
+  
   char c;
   if ( altSerial.available() ) {
     c = altSerial.read();
@@ -98,5 +63,13 @@ String getCharGPS() {
       sentenceBuf[sentenceBufIndex] = 0;
     }
   }
-  return (String) sentenceBuf;
+}
+void sendMyGPS() {
+  //print out sentenceBuf, all of it - KN
+  int i = 0;
+  while( sentenceBuf[i+1] != 0 ) {
+      Serial.write( sentenceBuf[i] );
+      sentenceRdy = false;
+      i++;
+  }
 }

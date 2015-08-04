@@ -1,0 +1,4 @@
+payload --> payloadGPS + counter
+gnd --> gndGPS + counter from payload msg
+payload --> counter from gnd (which was from payload) + current payload counter + " ok" if ok, "-not ok" if not
+gnd takes the message and awaits next transmit
