@@ -30,38 +30,41 @@ int numb = 0;
 void setup(){
   Serial.begin(9600);
   
-  altSerial.begin( 4800 ); 
+  altSerial.begin( 9600 ); 
   sentencePending = false;
   sentenceRdy = false;
   sentenceBuf[0] = 0;
   sentenceBufIndex = 0;
   MsTimer2::set(5000, transmit);
   MsTimer2::start();
-  pinMode(9,INPUT_PULLUP);
+  pinMode(5,INPUT_PULLUP);
 }
 boolean help = 0;
 void loop(){
   //for testing
-  if(!digitalRead(9) && !help){
-    Serial.println("321654 ok");
+  if(!digitalRead(5) && !help){
+    printAndSend("321654 ok");
     help = 1;
   }
   
   //RX section
   char lastChar;
-  while(Serial.available()){
-    lastChar = Serial.read();
+  while(altSerial.available()){
+    lastChar = altSerial.read();
     if(lastChar == 10){ //if I get a new line
       int rcvdNum = msgIn.substring(1 + msgIn.indexOf(' ')).toInt();
       boolean ok = false;
       if (rcvdNum == numb-1){
         ok = true;
       }
-      Serial.print(msgIn.substring(1 + msgIn.indexOf(' ')) + "#"+(String)(numb-1));
+      altSerial.print(msgIn.substring(1 + msgIn.indexOf(' ')) + "#"+(String)(numb-1));
+      Serial.print(msgIn.substring(1 + msgIn.indexOf(' ')) + "#"+(String)(numb-1));//for logging
       if(ok){
-        Serial.println(" ok");
+        altSerial.println(" ok");
+        Serial.println(" ok");//for logging
       }else{
-        Serial.println("-not ok");
+        altSerial.println("-not ok");//the space is important here
+        Serial.println("-not ok");//for logging
       }
       msgIn = "";
     }else{
@@ -81,8 +84,8 @@ void loop(){
 void getCharGPS() {
   
   char c;
-  if ( altSerial.available() ) {
-    c = altSerial.read();
+  if ( Serial.available() ) {
+    c = Serial.read();
     if ( !sentenceRdy ) {
       if ( c == 36 ) { //36 is '$', start of GPS statement - KN
         sentenceBufIndex = 0;
@@ -103,15 +106,22 @@ void sendData() {
   //print out sentenceBuf, all of it - KN
   int i = 0;
   while( sentenceBuf[i+1] != 0 ) {
-      Serial.write( sentenceBuf[i] );
+      altSerial.write( sentenceBuf[i] );
+      Serial.write( sentenceBuf[i] );//for logging
       sentenceRdy = false;
       i++;
   }
-  Serial.print(" "+(String)numb); //also puts the 0 at the end of TX string
+  altSerial.print(" "+(String)numb); //also puts the 0 at the end of TX string
+  Serial.print(" "+(String)numb);
+  altSerial.write(10);
   Serial.write(10);
 }
 
 void transmit() {
   txFlag = true;
   help = 0;
+}
+void printAndSend(String whatToSend){ //sends message to both logger and rf module
+  altSerial.print(whatToSend);
+  Serial.print(whatToSend);
 }

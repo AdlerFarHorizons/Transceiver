@@ -17,7 +17,7 @@ String msgIn = "";
 
 void setup(){
   Serial.begin(9600);
-    altSerial.begin( 4800 ); 
+  altSerial.begin( 9600 ); 
   sentencePending = false;
   sentenceRdy = false;
   sentenceBuf[0] = 0;
@@ -25,8 +25,8 @@ void setup(){
 }
 void loop(){
   char lastChar;
-  while(Serial.available()){
-    lastChar = Serial.read();
+  while(altSerial.available()){
+    lastChar = altSerial.read();
     if(lastChar == 10 && msgIn != ""){ //end of RX string
       if(msgIn.substring(msgIn.indexOf(' ')) == " ok\r"){ //if this is just the acknowledgement message
         //we're done, payload rcvd our msg
@@ -34,7 +34,8 @@ void loop(){
       }else{
         sendMyGPS(); 
         //filters out the counter number at the end of rx string and send it
-        Serial.println(" "+msgIn.substring(1 + msgIn.indexOf(' ')));
+        altSerial.println(" "+msgIn.substring(1 + msgIn.indexOf(' ')));
+        Serial.println(" "+msgIn.substring(1 + msgIn.indexOf(' ')));//for logging
         msgIn = "";
       }
     }else{
@@ -47,8 +48,8 @@ void loop(){
 void getCharGPS() {
   
   char c;
-  if ( altSerial.available() ) {
-    c = altSerial.read();
+  if ( Serial.available() ) {
+    c = Serial.read();
     if ( !sentenceRdy ) {
       if ( c == 36 ) { //36 is '$', start of GPS statement - KN
         sentenceBufIndex = 0;
@@ -68,8 +69,14 @@ void sendMyGPS() {
   //print out sentenceBuf, all of it - KN
   int i = 0;
   while( sentenceBuf[i+1] != 0 ) {
-      Serial.write( sentenceBuf[i] );
+      altSerial.write( sentenceBuf[i] );
+      Serial.write(sentenceBuf[i]);//for logging
       sentenceRdy = false;
       i++;
   }
+}
+
+void printAndSend(String whatToSend){ //sends message to both logger and rf module
+  altSerial.print(whatToSend);
+  Serial.print(whatToSend);
 }
