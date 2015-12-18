@@ -16,8 +16,9 @@
 AltSoftSerial altSerial; // TX Pin 9, RX Pin 8
 char pkt_buffer[200];
 boolean sentencePending, sentenceRdy;
-boolean txFlag;
-char sentenceBuf[100];
+boolean txFlag, help;
+char sentenceBuf[GPSLEN];
+char sentenceBuf2[GPSLEN];
 String gpsTime, gpsDate, gpsLat, gpsLon, gpsAlt, gspVgnd, gpsHdng;
 int sentenceBufIndex = 0;
 String msgIn = "";
@@ -35,36 +36,44 @@ void setup(){
   sentenceRdy = false;
   sentenceBuf[0] = 0;
   sentenceBufIndex = 0;
-  MsTimer2::set(5000, transmit);
+  MsTimer2::set(10000, transmit);
   MsTimer2::start();
   pinMode(5,INPUT_PULLUP);
+  help = false;
 }
-boolean help = 0;
 void loop(){
   //for testing
   if(!digitalRead(5) && !help){
     printAndSend("321654 ok");
     help = 1;
   }
-  
+
+  // Copy any completed sentence to 2nd buffer
+  if ( sentenceRdy ) {
+    for ( int i = 0 ; i < GPSLEN ; i++ ) {
+        sentenceBuf2[i] = sentenceBuf[i];
+    }
+    sentenceRdy = false;
+  }
   //RX section
   char lastChar;
   while(altSerial.available()){
     lastChar = altSerial.read();
     if(lastChar == 10){ //if I get a new line
-      int rcvdNum = msgIn.substring(1 + msgIn.indexOf(' ')).toInt();
+      Serial.println( msgIn );
+      int rcvdNum = (int)msgIn.substring(1 + msgIn.indexOf(' ')).toInt();
       boolean ok = false;
       if (rcvdNum == numb-1){
         ok = true;
       }
-      altSerial.print(msgIn.substring(1 + msgIn.indexOf(' ')) + "#"+(String)(numb-1));
-      Serial.print(msgIn.substring(1 + msgIn.indexOf(' ')) + "#"+(String)(numb-1));//for logging
+      //altSerial.print(msgIn.substring(1 + msgIn.indexOf(' ')) + "#"+(String)(numb-1));
+      //Serial.print(msgIn.substring(1 + msgIn.indexOf(' ')) + "#"+(String)(numb-1));//for logging
       if(ok){
-        altSerial.println(" ok");
-        Serial.println(" ok");//for logging
+        //altSerial.println(" ok");
+        //Serial.println(" ok");//for logging
       }else{
-        altSerial.println("-not ok");//the space is important here
-        Serial.println("-not ok");//for logging
+        //altSerial.println("-not ok");//the space is important here
+        //Serial.println("-not ok");//for logging
       }
       msgIn = "";
     }else{
@@ -73,16 +82,16 @@ void loop(){
   }
   //TX
   if ( txFlag ) {
+    Serial.print( "TX:" ); // Identifies transmitted packet for log.
     sendData();
     numb++;
     txFlag = false;
-  } else {
-    getCharGPS();
+    Serial.print( "RX:" );
   }
+  getCharGPS();
 }
 
 void getCharGPS() {
-  
   char c;
   if ( Serial.available() ) {
     c = Serial.read();
@@ -105,12 +114,26 @@ void getCharGPS() {
 void sendData() {
   //print out sentenceBuf, all of it - KN
   int i = 0;
-  while( sentenceBuf[i+1] != 0 ) {
-      altSerial.write( sentenceBuf[i] );
-      Serial.write( sentenceBuf[i] );//for logging
-      sentenceRdy = false;
-      i++;
+  
+//  if ( sentenceBuf[0] == 0 || msgIn == "" ) {
+//    Serial.println("");
+//  }
+  if ( sentenceRdy ) {
+    while( sentenceBuf[i+1] != 0 ) {
+        altSerial.write( sentenceBuf[i] );
+        Serial.write( sentenceBuf[i] );//for logging
+        i++;
+    }
+    sentenceRdy = false;
+  } else { // Latest data not ready yet, use 2nd buffer
+    Serial.print( "BUF" );
+    while( sentenceBuf2[i+1] != 0 ) {
+        altSerial.write( sentenceBuf[i] );
+        Serial.write( sentenceBuf2[i] );//for logging
+        i++;
+    }
   }
+  
   altSerial.print(" "+(String)numb); //also puts the 0 at the end of TX string
   Serial.print(" "+(String)numb);
   altSerial.write(10);
