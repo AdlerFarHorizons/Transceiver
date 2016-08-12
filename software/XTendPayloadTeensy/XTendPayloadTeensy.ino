@@ -2,7 +2,7 @@
  * Serial1: GPS and LOGGER 
  * Serial2: RF IN/OUT
  */
-#define GPSLEN 100 //max length of GPS output to be sent
+#include <TimeLib.h>
 char pkt_buffer[200];
 boolean sentencePending, sentenceRdy;
 boolean txFlag, help;
@@ -20,6 +20,7 @@ IntervalTimer txTimer;
 void setup(){
   Serial1.begin(9600);  
   Serial2.begin(9600); 
+  setSyncProvider( getTeensy3Time );
   sentencePending = false;
   sentenceRdy = false;
   sentenceBuf[0] = 0;
@@ -124,4 +125,31 @@ void transmit() {
 void printAndSend(String whatToSend){ //sends message to both logger and rf module
   Serial2.print( whatToSend ); // RF module
   Serial1.print( whatToSend ); // Logger
+}
+
+time_t getTeensy3Time() {
+  return Teensy3Clock.get();
+}
+
+void digitalClockDisplay(time_t t) {
+  // digital clock display of the time
+  int hr = hour(t);
+  if ( hr < 10 ) Serial.print( '0' );
+  Serial.print(hr);
+  printDigits(minute(t));
+  printDigits(second(t));
+  Serial.print(" ");
+  Serial.print(day(t));
+  Serial.print(" ");
+  Serial.print(month(t));
+  Serial.print(" ");
+  Serial.print(year(t)); 
+}
+
+void printDigits(int digits){
+  // utility function for digital clock display: prints preceding colon and leading 0
+  Serial.print(":");
+  if(digits < 10)
+    Serial.print('0');
+  Serial.print(digits);
 }
