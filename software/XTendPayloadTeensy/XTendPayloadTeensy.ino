@@ -1,6 +1,6 @@
 /*
- * SERIAL1: GPS and LOGGER 
- * SERIAL2: RF IN/OUT
+ * Serial1: GPS and LOGGER 
+ * Serial2: RF IN/OUT
  */
 #define GPSLEN 100 //max length of GPS output to be sent
 char pkt_buffer[200];
@@ -28,7 +28,7 @@ void setup(){
   pinMode(5,INPUT_PULLUP);
 }
 void loop(){
-  // Copy any completed sentence to 2nd buffer
+  // Copy any completed sentence to the buffer, set up for next sentence.
   if ( sentenceRdy ) {
     for ( int i = 0 ; i < GPSLEN ; i++ ) {
         sentenceBuf2[i] = sentenceBuf[i];
@@ -92,12 +92,9 @@ void getCharGPS() {
 }
 
 void sendData() {
-  //print out sentenceBuf, all of it - KN
+  //print out sentence, all of it - KN
   int i = 0;
   
-//  if ( sentenceBuf[0] == 0 || msgIn == "" ) {
-//    Serial.println("");
-//  }
   if ( sentenceRdy ) {
     while( sentenceBuf[i+1] != 0 ) {
         Serial2.write( sentenceBuf[i] );
@@ -105,7 +102,7 @@ void sendData() {
         i++;
     }
     sentenceRdy = false;
-  } else { // Latest data not ready yet, use 2nd buffer
+  } else { // Buffer data is being updated. Use current sentence
     Serial1.print( "BUF" );
     while( sentenceBuf2[i+1] != 0 ) {
         Serial2.write( sentenceBuf[i] );
@@ -125,6 +122,6 @@ void transmit() {
   help = 0;
 }
 void printAndSend(String whatToSend){ //sends message to both logger and rf module
-  Serial2.print(whatToSend);
-  Serial1.print(whatToSend);
+  Serial2.print( whatToSend ); // RF module
+  Serial1.print( whatToSend ); // Logger
 }
