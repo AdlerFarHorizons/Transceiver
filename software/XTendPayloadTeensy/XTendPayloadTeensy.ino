@@ -1,8 +1,11 @@
 /*
+ * Serial:  Serial Monitor through USB
  * Serial1: GPS and LOGGER 
  * Serial2: RF IN/OUT
  */
 #include <TimeLib.h>
+const boolean DEBUG = false;
+const int GPSLEN = 100; //max length of GPS output to be sent
 char pkt_buffer[200];
 boolean sentencePending, sentenceRdy, sentenceBufRdy;
 boolean txFlag, help;
@@ -18,6 +21,7 @@ IntervalTimer txTimer;
 //const int pin2 = 2;
 
 void setup(){
+  Serial.begin(9600);
   Serial1.begin(9600);  
   Serial2.begin(9600); 
   setSyncProvider( getTeensy3Time );
@@ -25,7 +29,7 @@ void setup(){
   sentenceRdy = false;
   sentence[0] = 0;
   sentenceIndex = 0;
-  txTimer.begin(transmit, 10000);
+  txTimer.begin(transmit, 10000000);
   pinMode(5,INPUT_PULLUP);
   while( !Serial1 );
   while( !Serial2 );
@@ -39,12 +43,17 @@ void loop(){
     }
     sentenceBufRdy = true;
     sentenceRdy = false;
+    if ( DEBUG ) {
+      Serial.print( " BUF:" );Serial.print( sentence );
+      Serial.print( "BUF2:" );Serial.print( sentenceBuf );
+    }
   }
   //RX section, READ from RF
   char lastChar;
   while(Serial2.available()){
     lastChar = Serial2.read();
     if( lastChar == 10 && msgIn != "" ){ //if I get a new line
+      Serial.print( "RX " );digitalClockDisplay( now() );
       Serial.println( msgIn );
       int rcvdNum = (int)msgIn.substring(1 + msgIn.indexOf(' ')).toInt();
       boolean ok = false;
@@ -67,6 +76,7 @@ void loop(){
   }
   //TX
   if ( txFlag ) {
+    Serial.print("TX:");digitalClockDisplay( now() );
     Serial1.print( "TX:" ); // Identifies transmitted packet for log.
     sendData();
     numb++;
@@ -80,6 +90,7 @@ void getCharGPS() {
   char c;
   if ( Serial1.available() ) {
     c = Serial1.read();
+    if ( DEBUG ) Serial.write( c );
     if ( !sentenceRdy ) {
       if ( c == 36 ) { //36 is '$', start of GPS statement - KN
         sentenceIndex = 0;
