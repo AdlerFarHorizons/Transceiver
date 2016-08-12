@@ -4,12 +4,12 @@
  */
 #include <TimeLib.h>
 char pkt_buffer[200];
-boolean sentencePending, sentenceRdy;
+boolean sentencePending, sentenceRdy, sentenceBufRdy;
 boolean txFlag, help;
+char sentence[GPSLEN];
 char sentenceBuf[GPSLEN];
-char sentenceBuf2[GPSLEN];
 String gpsTime, gpsDate, gpsLat, gpsLon, gpsAlt, gspVgnd, gpsHdng;
-int sentenceBufIndex = 0;
+int sentenceIndex = 0;
 String msgIn = "";
 
 String output = "hello";
@@ -23,8 +23,8 @@ void setup(){
   setSyncProvider( getTeensy3Time );
   sentencePending = false;
   sentenceRdy = false;
-  sentenceBuf[0] = 0;
-  sentenceBufIndex = 0;
+  sentence[0] = 0;
+  sentenceIndex = 0;
   txTimer.begin(transmit, 10000);
   pinMode(5,INPUT_PULLUP);
   while( !Serial1 );
@@ -33,9 +33,11 @@ void setup(){
 void loop(){
   // Copy any completed sentence to the buffer, set up for next sentence.
   if ( sentenceRdy ) {
+    sentenceBufRdy = false;
     for ( int i = 0 ; i < GPSLEN ; i++ ) {
-        sentenceBuf2[i] = sentenceBuf[i];
+        sentenceBuf[i] = sentence[i];
     }
+    sentenceBufRdy = true;
     sentenceRdy = false;
   }
   //RX section, READ from RF
@@ -80,16 +82,16 @@ void getCharGPS() {
     c = Serial1.read();
     if ( !sentenceRdy ) {
       if ( c == 36 ) { //36 is '$', start of GPS statement - KN
-        sentenceBufIndex = 0;
+        sentenceIndex = 0;
         sentencePending = true;
       }
       if ( sentencePending && c == 10 ) { //10 is new line - KN
         sentenceRdy = true;
         sentencePending = false;
       }
-      sentenceBuf[sentenceBufIndex] = c;
-      sentenceBufIndex++;
-      sentenceBuf[sentenceBufIndex] = 0;
+      sentence[sentenceIndex] = c;
+      sentenceIndex++;
+      sentence[sentenceIndex] = 0;
     }
   }
 }
@@ -98,7 +100,7 @@ void sendData() {
   //print out sentence, all of it - KN
   int i = 0;
   
-  if ( sentenceRdy ) {
+  if ( sentenceBufRdy ) {
     while( sentenceBuf[i+1] != 0 ) {
         Serial2.write( sentenceBuf[i] );
         Serial1.write( sentenceBuf[i] );//for logging
@@ -106,7 +108,7 @@ void sendData() {
     }
     sentenceRdy = false;
   } else { // Buffer data is being updated. Use current sentence
-    while( sentenceBuf2[i+1] != 0 ) {
+    while( sentence[i+1] != 0 ) {
         Serial2.write( sentenceBuf[i] );
         Serial1.write( sentenceBuf2[i] );//for logging
         i++;
