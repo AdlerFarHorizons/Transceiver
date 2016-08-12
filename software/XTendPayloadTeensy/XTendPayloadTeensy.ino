@@ -27,6 +27,8 @@ void setup(){
   sentenceBufIndex = 0;
   txTimer.begin(transmit, 10000);
   pinMode(5,INPUT_PULLUP);
+  while( !Serial1 );
+  while( !Serial2 );
 }
 void loop(){
   // Copy any completed sentence to the buffer, set up for next sentence.
@@ -40,7 +42,7 @@ void loop(){
   char lastChar;
   while(Serial2.available()){
     lastChar = Serial2.read();
-    if(lastChar == 10){ //if I get a new line
+    if( lastChar == 10 && msgIn != "" ){ //if I get a new line
       Serial.println( msgIn );
       int rcvdNum = (int)msgIn.substring(1 + msgIn.indexOf(' ')).toInt();
       boolean ok = false;
@@ -104,7 +106,6 @@ void sendData() {
     }
     sentenceRdy = false;
   } else { // Buffer data is being updated. Use current sentence
-    Serial1.print( "BUF" );
     while( sentenceBuf2[i+1] != 0 ) {
         Serial2.write( sentenceBuf[i] );
         Serial1.write( sentenceBuf2[i] );//for logging
