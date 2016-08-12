@@ -113,32 +113,36 @@ void sendData() {
   
   if ( sentenceBufRdy ) {
     while( sentenceBuf[i+1] != 0 ) {
-        Serial2.write( sentenceBuf[i] );
-        Serial1.write( sentenceBuf[i] );//for logging
-        i++;
+      printAndSendChar( sentenceBuf[i] );
+      i++;
     }
     sentenceRdy = false;
   } else { // Buffer data is being updated. Use current sentence
     while( sentence[i+1] != 0 ) {
-        Serial2.write( sentenceBuf[i] );
-        Serial1.write( sentenceBuf2[i] );//for logging
-        i++;
+      printAndSendChar( sentenceBuf[i] );
+      i++;
     }
   }
-  
-  Serial2.print(" "+(String)numb); //also puts the 0 at the end of TX string
-  Serial1.print(" "+(String)numb);
-  Serial2.write(10);
-  Serial1.write(10);
+
+  printAndSendString( " " + (String)numb ); //also puts the 0 at the end of TX string
+  printAndSendChar( 10 );
 }
 
 void transmit() {
   txFlag = true;
   help = 0;
 }
-void printAndSend(String whatToSend){ //sends message to both logger and rf module
+
+void printAndSendString( String whatToSend ){ //sends message to both logger and rf module
   Serial2.print( whatToSend ); // RF module
   Serial1.print( whatToSend ); // Logger
+  Serial.print( whatToSend ); // Terminal
+}
+
+void printAndSendChar( char whatToSend ){ //sends message to both logger and rf module
+  Serial2.write( whatToSend ); // RF module
+  Serial1.write( whatToSend ); // Logger
+  Serial.write( whatToSend ); // Terminal
 }
 
 time_t getTeensy3Time() {
