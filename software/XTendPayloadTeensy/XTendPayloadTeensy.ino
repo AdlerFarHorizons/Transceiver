@@ -1,6 +1,6 @@
 /*
  * Serial:  Serial Monitor through USB
- * Serial1: GPS and LOGGER 
+ * Serial1: GPS
  * Serial2: RF IN/OUT
  */
 #include <TimeLib.h>
@@ -13,12 +13,11 @@ char sentence[GPSLEN];
 char sentenceBuf[GPSLEN];
 String gpsTime, gpsDate, gpsLat, gpsLon, gpsAlt, gspVgnd, gpsHdng;
 int sentenceIndex = 0;
+int rcvdNum;
 String msgIn = "";
 
-String output = "hello";
 int numb = 0;
 IntervalTimer txTimer;
-//const int pin2 = 2;
 
 void setup(){
   Serial.begin(9600);
@@ -52,23 +51,10 @@ void loop(){
   char lastChar;
   while(Serial2.available()){
     lastChar = Serial2.read();
-    if( lastChar == 10 && msgIn != "" ){ //if I get a new line
-      Serial.print( "RX " );digitalClockDisplay( now() );
+    if(lastChar == 10 && msgIn != ""){ //end of RX string
+      Serial.print( "RX " );digitalClockDisplay( now() );Serial.print( ':' );
       Serial.println( msgIn );
-      int rcvdNum = (int)msgIn.substring(1 + msgIn.indexOf(' ')).toInt();
-      boolean ok = false;
-      if (rcvdNum == numb-1){
-        ok = true;
-      }
-      //altSerial.print(msgIn.substring(1 + msgIn.indexOf(' ')) + "#"+(String)(numb-1));
-      //Serial.print(msgIn.substring(1 + msgIn.indexOf(' ')) + "#"+(String)(numb-1));//for logging
-      if(ok){
-        //altSerial.println(" ok");
-        //Serial.println(" ok");//for logging
-      }else{
-        //altSerial.println("-not ok");//the space is important here
-        //Serial.println("-not ok");//for logging
-      }
+      rcvdNum = (int)msgIn.substring(1 + msgIn.indexOf(' ')).toInt();
       msgIn = "";
     }else{
       msgIn += lastChar;
@@ -76,12 +62,10 @@ void loop(){
   }
   //TX
   if ( txFlag ) {
-    Serial.print("TX:");digitalClockDisplay( now() );
-    Serial1.print( "TX:" ); // Identifies transmitted packet for log.
+    Serial.print("TX ");digitalClockDisplay( now() );Serial.print( ':' );
     sendData();
     numb++;
     txFlag = false;
-    Serial1.print( "RX:" );
   }
   getCharGPS();
 }
@@ -133,15 +117,13 @@ void transmit() {
   help = 0;
 }
 
-void printAndSendString( String whatToSend ){ //sends message to both logger and rf module
+void printAndSendString( String whatToSend ){ //sends message to both terminal & rf module
   Serial2.print( whatToSend ); // RF module
-  Serial1.print( whatToSend ); // Logger
   Serial.print( whatToSend ); // Terminal
 }
 
-void printAndSendChar( char whatToSend ){ //sends message to both logger and rf module
+void printAndSendChar( char whatToSend ){ //sends message to both terminal & rf module
   Serial2.write( whatToSend ); // RF module
-  Serial1.write( whatToSend ); // Logger
   Serial.write( whatToSend ); // Terminal
 }
 
@@ -167,7 +149,6 @@ void digitalClockDisplay(time_t t) {
 void printDigits(int digits){
   // utility function for digital clock display: prints preceding colon and leading 0
   Serial.print(":");
-  if(digits < 10)
-    Serial.print('0');
+  if(digits < 10) Serial.print('0');
   Serial.print(digits);
 }
