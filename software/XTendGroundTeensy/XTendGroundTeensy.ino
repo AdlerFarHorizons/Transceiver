@@ -17,7 +17,7 @@ int rcvdNum;
 String msgIn = "";
 
 int numb = 0;
-IntervalTimer txTimer;
+//IntervalTimer txTimer;
 
 void setup(){
   Serial.begin(9600);
@@ -28,7 +28,7 @@ void setup(){
   sentenceRdy = false;
   sentence[0] = 0;
   sentenceIndex = 0;
-  txTimer.begin(transmit, 10000000);
+  //txTimer.begin(transmit, 10000000);
   pinMode(5,INPUT_PULLUP);
   while( !Serial1 );
   while( !Serial2 );
@@ -56,6 +56,7 @@ void loop(){
       Serial.println( msgIn );
       rcvdNum = (int)msgIn.substring(1 + msgIn.indexOf(' ')).toInt();
       msgIn = "";
+      txFlag = true; //Set up to transmit response after RX
     }else{
       msgIn += lastChar;
     }
@@ -107,8 +108,8 @@ void sendData() {
       i++;
     }
   }
-
-  printAndSendString( " " + (String)numb ); //also puts the 0 at the end of TX string
+  
+  printAndSendString( " " + (String)rcvdNum ); //also puts the 0 at the end of TX string
   printAndSendChar( 10 );
 }
 
@@ -149,6 +150,7 @@ void digitalClockDisplay(time_t t) {
 void printDigits(int digits){
   // utility function for digital clock display: prints preceding colon and leading 0
   Serial.print(":");
-  if(digits < 10) Serial.print('0');
+  if(digits < 10)
+    Serial.print('0');
   Serial.print(digits);
 }
