@@ -4,11 +4,16 @@
  * Serial2: RF IN/OUT
  */
 #include <TimeLib.h>
+#include <SD.h>
+#include <SPI.h>
+const int csSDCard = 14;
+
 const boolean DEBUG = false;
 const int GPSLEN = 100; //max length of GPS output to be sent
+char logFileName[13];
 char pkt_buffer[200];
 boolean sentencePending, sentenceRdy, sentenceBufRdy;
-boolean txFlag, help;
+boolean txFlag, isLogging;
 char sentence[GPSLEN];
 char sentenceBuf[GPSLEN];
 String gpsTime, gpsDate, gpsLat, gpsLon, gpsAlt, gspVgnd, gpsHdng;
@@ -18,6 +23,8 @@ String msgIn = "";
 
 int numb = 0;
 //IntervalTimer txTimer;
+
+File logFile;
 
 void setup(){
   Serial.begin(9600);
@@ -30,15 +37,37 @@ void setup(){
   sentenceIndex = 0;
   //txTimer.begin(transmit, 10000000);
   pinMode(5,INPUT_PULLUP);
-  while( !Serial1 );
-  while( !Serial2 );
+  delay( 2000 );
+  if (!SD.begin( csSDCard )) {
+    Serial.println("Card failed, or not present");
+    // don't do anything more:
+    Serial.println( "SD Card failed or not present. Logging disabled" );
+    isLogging = false;
+  } else {
+    String logFileNameStr = timeToFilename( now() );
+    logFileNameStr.toCharArray( logFileName, 13 );
+    logFile = SD.open( logFileName, FILE_WRITE );
+    if ( logFile ) {
+      Serial.println( "Log file " + logFileNameStr + " opened. Logging enabled" );
+      isLogging = true;
+    } else {
+      Serial.println( "Failed to open logfile. Logging disabled" );
+      isLogging = false;
+    }
+  }
+  
+  if (isLogging ) {
+    logFile.println( "\n====== Comm started ======\n" );
+    logFile.flush();
+  }
 }
+
 void loop(){
   // Copy any completed sentence to the buffer, set up for next sentence.
   if ( sentenceRdy ) {
     sentenceBufRdy = false;
     for ( int i = 0 ; i < GPSLEN ; i++ ) {
-        sentenceBuf[i] = sentence[i];
+      sentenceBuf[i] = sentence[i];
     }
     sentenceBufRdy = true;
     sentenceRdy = false;
@@ -108,24 +137,27 @@ void sendData() {
       i++;
     }
   }
-  
+
   printAndSendString( " " + (String)rcvdNum ); //also puts the 0 at the end of TX string
   printAndSendChar( 10 );
+
+  if ( isLogging ) logFile.flush();
 }
 
 void transmit() {
   txFlag = true;
-  help = 0;
 }
 
 void printAndSendString( String whatToSend ){ //sends message to both terminal & rf module
   Serial2.print( whatToSend ); // RF module
   Serial.print( whatToSend ); // Terminal
+  if ( isLogging ) logFile.print( whatToSend ); // Log file
 }
 
 void printAndSendChar( char whatToSend ){ //sends message to both terminal & rf module
   Serial2.write( whatToSend ); // RF module
   Serial.write( whatToSend ); // Terminal
+  if ( isLogging ) logFile.write( whatToSend ); // Log file
 }
 
 time_t getTeensy3Time() {
@@ -150,7 +182,16 @@ void digitalClockDisplay(time_t t) {
 void printDigits(int digits){
   // utility function for digital clock display: prints preceding colon and leading 0
   Serial.print(":");
-  if(digits < 10)
-    Serial.print('0');
+  if(digits < 10) Serial.print('0');
   Serial.print(digits);
 }
+
+String timeToFilename( time_t t ) {
+  char timeStr[15];
+  sprintf( timeStr, "%04i%02i%02i%02i%02i%02i",
+           year(t), month(t), day(t), hour(t), minute(t), second(t) );
+  String tempStr = (String)timeStr;
+  String tempStr2 = tempStr.substring( 2, 10 ) + "." + tempStr.substring( 10, 13 );
+  return String( tempStr2 );
+}
+
