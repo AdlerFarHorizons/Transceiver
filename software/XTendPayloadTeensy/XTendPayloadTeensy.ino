@@ -7,6 +7,7 @@
 #include <SD.h>
 #include <SPI.h>
 const int csSDCard = 14;
+const int xtSleepPin = 15;
 
 const boolean DEBUG = false;
 const int GPSLEN = 100; //max length of GPS output to be sent
@@ -60,6 +61,9 @@ void setup(){
     logFile.println( "\n====== Comm started ======\n" );
     logFile.flush();
   }
+
+  digitalWrite( xtSleepPin, HIGH );
+  
 }
 
 void loop(){
